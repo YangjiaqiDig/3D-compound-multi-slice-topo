@@ -1,15 +1,27 @@
 from model import U_Net
 from dataset import *
 import torch
+import numpy as np
+import sys
 import torch.nn as nn
 from modules import *
 # from save_history import *
 
-
+# np.set_printoptions(threshold=sys.maxsize)
 
 if __name__ == "__main__":
-    train = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
+    trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
     # test = CREMIDataTest('train/test')
+    train, label = trainData.__getitem__()
+    # slices 3
+    paddings = torch.zeros(1, train.shape[2], train.shape[2])
+    train = torch.cat((paddings, train, paddings))
+    label = torch.cat((paddings.long(), label, paddings.long()))
+    new_train = []
+    print(train.shape)
+    ss
+
+
 
     train_load = torch.utils.data.DataLoader(dataset=train, num_workers=3, batch_size=2, shuffle=True)
     # test_load = torch.utils.data.DataLoader(dataset=test, num_workers=3, batch_size=2, shuffle=False)

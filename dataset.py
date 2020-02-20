@@ -14,8 +14,8 @@ IN_SIZE = 1250
 OUT_SIZE = 1250
 class CREMIDataTrain(Dataset):
     def __init__(self, image_path, mask_path, in_size=IN_SIZE, out_size=OUT_SIZE):
-        self.mask_arr = Image.open(str(image_path))
-        self.image_arr = Image.open(str(mask_path))
+        self.image_arr = Image.open(str(image_path))
+        self.mask_arr = Image.open(str(mask_path))
         self.in_size, self.out_size = in_size, out_size
 
     def __getitem__(self):
@@ -70,8 +70,10 @@ class CREMIDataTrain(Dataset):
         # Normalize
         img_as_np = normalization2(img_as_np.astype(float), max=1, min=0)
         msk_as_np = msk_as_np / 255
+
         img_as_tensor = torch.from_numpy(img_as_np).float()
         msk_as_tensor = torch.from_numpy(msk_as_np).long()
+
 
         # lab1 = Image.fromarray(msk_as_img[0])
         # lab1.show()

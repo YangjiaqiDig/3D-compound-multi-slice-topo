@@ -47,6 +47,7 @@ class U_Net(nn.Module):
 
     def forward(self, x):
         print('input', x.shape)
+        ss
         # Down 1
         conv1 = self.conv1_block(x)
         print('after conv1', conv1.shape)
