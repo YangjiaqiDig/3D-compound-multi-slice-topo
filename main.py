@@ -12,28 +12,28 @@ def toSlicesGroupDataset(train, label, size):
     paddingSize = int(size / 2)
     paddings = torch.zeros(paddingSize, train.shape[2], train.shape[2])
     train = torch.cat((paddings, train, paddings))
-    label = torch.cat((paddings.long(), label, paddings.long()))
     new_train = []
-    new_label = []
     for i in range(0, train.shape[0] - size + 1):
         new_train.append(train[i:i + size])
-        new_label.append(label[i:i + size])
 
     new_train = torch.stack(new_train)
-    new_label = torch.stack(new_label)
+    train_data = []
+    for i in range(label.shape[0]):
+        train_data.append([new_train[i], label[i]])
 
-    return new_train, new_label
+    return train_data
 
 if __name__ == "__main__":
+    SLICES = 3
     trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
     # test = CREMIDataTest('train/test')
     train, label = trainData.__getitem__()
-    train, label = toSlicesGroupDataset(train, label, 3)
+    train_data = toSlicesGroupDataset(train, label, SLICES)
 
-    train_load = torch.utils.data.DataLoader(dataset=train, num_workers=3, batch_size=2, shuffle=True)
+    train_load = torch.utils.data.DataLoader(dataset=train_data, num_workers=3, batch_size=2, shuffle=True)
     # test_load = torch.utils.data.DataLoader(dataset=test, num_workers=3, batch_size=2, shuffle=False)
 
-    model = U_Net(in_channels=1, out_channels=32)
+    model = U_Net(in_channels=SLICES, out_channels=32)
     # model = torch.nn.DataParallel(model, device_ids=list(
     #     range(torch.cuda.device_count()))).cuda()
 
