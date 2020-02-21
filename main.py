@@ -8,20 +8,27 @@ from modules import *
 # from save_history import *
 
 # np.set_printoptions(threshold=sys.maxsize)
+def toSlicesGroupDataset(train, label, size):
+    paddingSize = int(size / 2)
+    paddings = torch.zeros(paddingSize, train.shape[2], train.shape[2])
+    train = torch.cat((paddings, train, paddings))
+    label = torch.cat((paddings.long(), label, paddings.long()))
+    new_train = []
+    new_label = []
+    for i in range(0, train.shape[0] - size + 1):
+        new_train.append(train[i:i + size])
+        new_label.append(label[i:i + size])
+
+    new_train = torch.stack(new_train)
+    new_label = torch.stack(new_label)
+
+    return new_train, new_label
 
 if __name__ == "__main__":
     trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
     # test = CREMIDataTest('train/test')
     train, label = trainData.__getitem__()
-    # slices 3
-    paddings = torch.zeros(1, train.shape[2], train.shape[2])
-    train = torch.cat((paddings, train, paddings))
-    label = torch.cat((paddings.long(), label, paddings.long()))
-    new_train = []
-    print(train.shape)
-    ss
-
-
+    train, label = toSlicesGroupDataset(train, label, 3)
 
     train_load = torch.utils.data.DataLoader(dataset=train, num_workers=3, batch_size=2, shuffle=True)
     # test_load = torch.utils.data.DataLoader(dataset=test, num_workers=3, batch_size=2, shuffle=False)
