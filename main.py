@@ -23,6 +23,14 @@ def toSlicesGroupDataset(train, label, size):
 
     return train_data
 
+def multiModel( single=1, size_1=0, size_2=0,):
+    model_single = U_Net(in_channels=single, out_channels=32)
+    if(size_1):
+        model_1 = U_Net(in_channels=size_1, out_channels=32)
+    if(size_2):
+        model_2 = U_Net(in_channels=size_2, out_channels=32)
+
+    return model_single, model_1, model_2
 if __name__ == "__main__":
     SLICES = 3
     trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
@@ -32,13 +40,15 @@ if __name__ == "__main__":
 
     train_load = torch.utils.data.DataLoader(dataset=train_data, num_workers=3, batch_size=2, shuffle=True)
     # test_load = torch.utils.data.DataLoader(dataset=test, num_workers=3, batch_size=2, shuffle=False)
+    model, model_1, _ = multiModel(single=1, size_1=SLICES, size_2=0)
 
-    model = U_Net(in_channels=SLICES, out_channels=32)
+
     # model = torch.nn.DataParallel(model, device_ids=list(
     #     range(torch.cuda.device_count()))).cuda()
 
     loss_fun = nn.CrossEntropyLoss()
     optimizer = torch.optim.RMSprop(model.parameters(), lr=0.001)
+    optimizer_1 = torch.optim.RMSprop(model_1.parameters(), lr=0.001)
 
     header = ['epoch', 'train loss', 'train acc']
     save_file_name = "history/RMS/history_RMS3.csv"
