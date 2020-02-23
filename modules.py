@@ -41,9 +41,9 @@ def train_multi_models(models, data_train, loss_fun, optimizers):
         #((2, 1, 1250, 1250), (2, 3, 1250, 1250), (2, 5, 1250, 1250), (2, 1250, 1250))
 
         outputs_1, outputs_2, outputs_3 = models[0](images_1), models[1](images_2), models[2](images_3)
-        predict = max_outputs(outputs_1, outputs_2, outputs_3)
+        predict_map = max_outputs(outputs_1, outputs_2, outputs_3)
 
-        loss = loss_fun(predict, masks)
+        loss = loss_fun(predict_map, masks)
         for optimizer in optimizers:
             optimizer.zero_grad()
         loss.backward()
@@ -51,18 +51,20 @@ def train_multi_models(models, data_train, loss_fun, optimizers):
             optimizer.step()
 
 
-def get_loss_train(model, data_train, loss_fun):
-    model.eval()
+def get_loss_train(models, data_train, loss_fun):
+    models[0].eval()
+    models[1].eval()
+    models[2].eval()
     total_acc = 0
     total_loss = 0
-    for batch, (images, masks) in enumerate(data_train):
+    for batch, (data_1, data_2, data_3) in enumerate(data_train):
+        images_1, images_2, images_3, masks = data_1[0], data_2[0], data_3[0], data_1[1]
         with torch.no_grad():
-            # images = images.cuda()
-            # masks = masks.cuda()
-            outputs = model(images)
-            loss = loss_fun(outputs, masks)
-            preds = torch.argmax(outputs, dim=1).float()
-            acc = accuracy_check_for_batch(masks.cup(), preds.cpu(), images.size()[0])
+            outputs_1, outputs_2, outputs_3 = models[0](images_1), models[1](images_2), models[2](images_3)
+            predict_map = max_outputs(outputs_1, outputs_2, outputs_3)
+            loss = loss_fun(predict_map, masks)
+            preds = torch.argmax(predict_map, dim=1).float()
+            acc = accuracy_check_for_batch(masks.cup(), preds.cpu(), images_1.size()[0])
             total_acc += acc
             total_loss += loss.cpu().item()
 

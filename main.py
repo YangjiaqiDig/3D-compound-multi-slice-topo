@@ -103,7 +103,9 @@ if __name__ == "__main__":
                            [optimizer_1, optimizer_2, optimizer_3])
 
         # just for print loss
-        train_acc, train_loss = get_loss_train(model, train_load_1, loss_fun)
+        train_acc, train_loss = get_loss_train([model_1, model_2, model_3],
+                           train_load,
+                           loss_fun)
 
         # train_loss = train_loss / len(SEM_train)
         print('Epoch', str(i + 1), 'Train loss:', train_loss, "Train acc", train_acc)
