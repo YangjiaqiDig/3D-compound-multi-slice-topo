@@ -9,20 +9,6 @@ from modules import *
 # from save_history import *
 
 # np.set_printoptions(threshold=sys.maxsize)
-class ComDataset(Dataset):
-    def __init__(self, data_1, data_2, data_3):
-        self.data_1 = data_1
-        self.data_2 = data_2
-        self.data_3 = data_3
-
-    def __getitem__(self, index):
-        x1, x2, x3 = self.data_1[index], self.data_2[index], self.data_3[index]
-
-        return x1, x2, x3
-
-    def __len__(self):
-        return len(self.data_1)
-
 
 def toSlicesGroupDataset(train, label, size):
     if not size:
@@ -55,16 +41,13 @@ def multiModel(single=1, size_1=0, size_2=0):
     return model_single, model_1, model_2
 
 
-if __name__ == "__main__":
-    SLICES_1 = 3
-    SLICES_2 = 5
-    trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
-    # test = CREMIDataTest('train/test')
-    train, label = trainData.__getitem__()
+def prepareDataForLoader(data):
+    train, label = data.__getitem__()
 
     train_data_1 = toSlicesGroupDataset(train, label, 0)
     train_data_2 = toSlicesGroupDataset(train, label, SLICES_1)
     train_data_3 = toSlicesGroupDataset(train, label, SLICES_2)
+
     dataset = ComDataset(train_data_1, train_data_2, train_data_3)
     """
     x1, x2, x3 = dataset.__getitem__(0)
@@ -73,8 +56,20 @@ if __name__ == "__main__":
     # print(len(x3), x3[0].shape, x3[1].shape)  # (2, (5, 1250, 1250), (1250, 1250))
     """
 
-    train_load = torch.utils.data.DataLoader(dataset=dataset, num_workers=3, batch_size=2, shuffle=True)
-    # test_load = torch.utils.data.DataLoader(dataset=test, num_workers=3, batch_size=2, shuffle=False)
+    return dataset
+
+
+if __name__ == "__main__":
+    SLICES_1 = 3
+    SLICES_2 = 5
+    trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
+    validData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
+
+    trainDataset = prepareDataForLoader(trainData)
+    validDataset = prepareDataForLoader(validData)
+
+    train_load = torch.utils.data.DataLoader(dataset=trainDataset, num_workers=3, batch_size=2, shuffle=True)
+    val_load = torch.utils.data.DataLoader(dataset=validDataset, num_workers=3, batch_size=2, shuffle=False)
 
     model_1, model_2, model_3 = multiModel(single=1, size_1=SLICES_1, size_2=SLICES_2)
     # model = torch.nn.DataParallel(model, device_ids=list(
@@ -104,8 +99,8 @@ if __name__ == "__main__":
 
         # just for print loss
         train_acc, train_loss = get_loss_train([model_1, model_2, model_3],
-                           train_load,
-                           loss_fun)
+                                               train_load,
+                                               loss_fun)
 
         # train_loss = train_loss / len(SEM_train)
         print('Epoch', str(i + 1), 'Train loss:', train_loss, "Train acc", train_acc)
@@ -113,8 +108,14 @@ if __name__ == "__main__":
         # Validation every 5 epoch
         # if (i + 1) % 5 == 0:
         #     val_acc, val_loss = validate_model(
-        #         model, SEM_val_load, criterion, i + 1, True, image_save_path)
+        #         [model_1, model_2, model_3],
+        #         validDataset,
+        #         loss_fun,
+        #         i + 1,
+        #         True,
+        #         image_save_path)
         #     print('Val loss:', val_loss, "val acc:", val_acc)
+        #
         #     values = [i + 1, train_loss, train_acc, val_loss, val_acc]
         #     export_history(header, values, save_dir, save_file_name)
         #
