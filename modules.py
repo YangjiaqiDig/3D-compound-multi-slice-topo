@@ -29,18 +29,27 @@ def accuracy_check_for_batch(masks, predictions, batch_size):
     return total_acc / batch_size
 
 
-def train_model(model, data_train, loss_fun, optimizer):
-    model.train()
+def train_multi_models(models, data_train, loss_fun, optimizers):
 
-    for batch, (images, masks) in enumerate(data_train):
+    models[0].train()
+    models[1].train()
+    models[2].train()
+
+    for batch, (data_1, data_2, data_3) in enumerate(data_train):
+        images_1, images_2, images_3, masks = data_1[0], data_2[0], data_3[0], data_1[1]
+        # print(images_1.shape, images_2.shape, images_3.shape, masks.shape)
+        #((2, 1, 1250, 1250), (2, 3, 1250, 1250), (2, 5, 1250, 1250), (2, 1250, 1250))
+
         # images = images.cuda()
         # masks = masks.cuda()
-        outputs = model(images)
-        # print(masks.shape, outputs.shape)
-        loss = loss_fun(outputs, masks)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        outputs_1, outputs_2, outputs_3 = models[0](images_1), models[1](images_2), models[2](images_3)
+        print(outputs_1,outputs_2,outputs_3)
+        ss
+    # print(masks.shape, outputs.shape)
+    loss = loss_fun(outputs, masks)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
 
 
 def get_loss_train(model, data_train, loss_fun):
