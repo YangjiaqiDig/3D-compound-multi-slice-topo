@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from PIL import Image
 import os
-
+from post_processing import *
 
 def accuracy_check(mask, prediction):
     ims = [mask, prediction]
@@ -40,16 +40,15 @@ def train_multi_models(models, data_train, loss_fun, optimizers):
         # print(images_1.shape, images_2.shape, images_3.shape, masks.shape)
         #((2, 1, 1250, 1250), (2, 3, 1250, 1250), (2, 5, 1250, 1250), (2, 1250, 1250))
 
-        # images = images.cuda()
-        # masks = masks.cuda()
         outputs_1, outputs_2, outputs_3 = models[0](images_1), models[1](images_2), models[2](images_3)
-        print(outputs_1,outputs_2,outputs_3)
-        ss
-    # print(masks.shape, outputs.shape)
-    loss = loss_fun(outputs, masks)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+        predict = max_outputs(outputs_1, outputs_2, outputs_3)
+
+        loss = loss_fun(predict, masks)
+        for optimizer in optimizers:
+            optimizer.zero_grad()
+        loss.backward()
+        for optimizer in optimizers:
+            optimizer.step()
 
 
 def get_loss_train(model, data_train, loss_fun):
