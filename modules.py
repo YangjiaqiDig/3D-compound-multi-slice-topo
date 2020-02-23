@@ -42,6 +42,7 @@ def train_multi_models(models, data_train, loss_fun, optimizers):
 
         outputs_1, outputs_2, outputs_3 = models[0](images_1), models[1](images_2), models[2](images_3)
         predict_map = max_outputs(outputs_1, outputs_2, outputs_3)
+        # predict_map = smooth_gaussian(predict_map)
 
         loss = loss_fun(predict_map, masks)
         for optimizer in optimizers:

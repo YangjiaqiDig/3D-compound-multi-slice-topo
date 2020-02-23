@@ -13,7 +13,8 @@ def mean_outputs(outputs_1, outputs_2, outputs_3):
     # probability_map =
     return probability_map
 
-# def smooth_gaussian
+def smooth_gaussian(probability_map):
+    return probability_map
 
 
 if __name__ == "__main__":
