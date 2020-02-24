@@ -3,6 +3,7 @@ from scipy.ndimage.interpolation import map_coordinates
 from scipy.ndimage.filters import gaussian_filter
 from random import randint
 
+
 def flip(image, label):
     """
     Args:
@@ -11,7 +12,7 @@ def flip(image, label):
     Return :
         image : numpy array of flipped image
     """
-    for i, (img, lab) in enumerate(zip(image,label)):
+    for i, (img, lab) in enumerate(zip(image, label)):
         flip_num = randint(0, 3)
         if flip_num == 0:
             # vertical
@@ -50,6 +51,7 @@ def add_gaussian_noise(image, mean=0, std=1):
         # image[i] = ceil_floor_image(image)
     return image
 
+
 def add_uniform_noise(image, low=-10, high=10):
     """
     Args:
@@ -66,12 +68,14 @@ def add_uniform_noise(image, low=-10, high=10):
         # image = ceil_floor_image(image)
     return image
 
+
 def change_brightness(image, value):
     for i, img in enumerate(image):
         img = img.astype("int16")
         img = img + value
         image[i] = ceil_floor_image(img)
     return image
+
 
 def add_elastic_transform(image, alpha, sigma, pad_size=30, seed=None):
     image_size = int(image.shape[0])
@@ -82,11 +86,11 @@ def add_elastic_transform(image, alpha, sigma, pad_size=30, seed=None):
     else:
         random_state = np.random.RandomState(seed)
     shape = image.shape
-    dx = gaussian_filter((random_state.rand(*shape) * 2 -1), sigma, mode="constant", cval=0) * alpha
-    dy = gaussian_filter((random_state.rand(*shape) * 2 -1), sigma, mode="constant", cval=0) * alpha
+    dx = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
+    dy = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
 
     x, y = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]))
-    indices = np.reshape(y+dy, (-1,1)), np.reshape(x+dx,(-1,1))
+    indices = np.reshape(y + dy, (-1, 1)), np.reshape(x + dx, (-1, 1))
     return cropping(map_coordinates(image, indices, order=1).reshape(shape), 512, pad_size, pad_size), seed
 
 
@@ -102,17 +106,18 @@ def ceil_floor_image(image):
     image = image.astype("uint8")
     return image
 
+
 def cropping(image, crop_size, dim1, dim2):
-    cropped_img = image[dim1:dim1+crop_size, dim2:dim2+crop_size]
+    cropped_img = image[dim1:dim1 + crop_size, dim2:dim2 + crop_size]
     return cropped_img
 
 
 def multi_cropping(image, crop_size, crop_num1, crop_num2):
     img_height, img_width = image.shape[0], image.shape[1]
-    assert crop_size*crop_num1 >= img_width and crop_size * \
-        crop_num2 >= img_height, "Whole image cannot be sufficiently expressed"
+    assert crop_size * crop_num1 >= img_width and crop_size * \
+           crop_num2 >= img_height, "Whole image cannot be sufficiently expressed"
     assert crop_num1 <= img_width - crop_size + 1 and crop_num2 <= img_height - \
-        crop_size + 1, "Too many number of crops"
+           crop_size + 1, "Too many number of crops"
 
     cropped_imgs = []
     # int((img_height - crop_size)/(crop_num1 - 1))
@@ -122,8 +127,9 @@ def multi_cropping(image, crop_size, crop_num1, crop_num2):
     for i in range(crop_num1):
         for j in range(crop_num2):
             cropped_imgs.append(cropping(image, crop_size,
-                                         dim1_stride*i, dim2_stride*j))
+                                         dim1_stride * i, dim2_stride * j))
     return np.asarray(cropped_imgs)
+
 
 def approximate_image(image):
     image[image > 127.5] = 255
@@ -131,14 +137,16 @@ def approximate_image(image):
     image = image.astype("uint8")
     return image
 
+
 def normalization(image, mean, std):
     image = image / 255
     image = (image - mean) / std
     return image
 
+
 def normalization2(image, max, min):
     for i, img in enumerate(image):
-        image[i] = (img - np.min(img)) * (max - min) / (np.max(img)-np.min(img)) + min
+        image[i] = (img - np.min(img)) * (max - min) / (np.max(img) - np.min(img)) + min
     return image
 
 
@@ -151,5 +159,4 @@ def stride_size(image_len, crop_num, crop_size):
     Return :
         stride_size(int) : stride size
     """
-    return int((image_len - crop_size)/(crop_num - 1))
-
+    return int((image_len - crop_size) / (crop_num - 1))

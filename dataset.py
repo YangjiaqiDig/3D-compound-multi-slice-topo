@@ -21,25 +21,27 @@ class CREMIDataTrain(Dataset):
 
     def __getitem__(self):
         img_as_np = []
+        orig_img_as_np = []
         for i, img_as_img in enumerate(ImageSequence.Iterator(self.image_arr)):
             singleImage_as_np = np.asarray(img_as_img)
             img_as_np.append(singleImage_as_np)
+            orig_img_as_np.append(singleImage_as_np)
 
         msk_as_np = []
+        orig_msk_as_np = []
         for j, label_as_img in enumerate(ImageSequence.Iterator(self.mask_arr)):
             singleLabel_as_np = np.asarray(label_as_img)
             msk_as_np.append(singleLabel_as_np)
+            orig_msk_as_np.append(singleLabel_as_np)
 
-        img_as_np = np.stack(img_as_np, axis=0)
-        msk_as_np = np.stack(msk_as_np, axis=0)
+        img_as_np, orig_img_as_np = np.stack(img_as_np, axis=0), np.stack(orig_img_as_np, axis=0)
+        msk_as_np, orig_msk_as_np = np.stack(msk_as_np, axis=0), np.stack(orig_msk_as_np, axis=0)
 
         train_size = int(img_as_np.shape[0] * TRAIN_VALID_RATIO)
         img_as_np, msk_as_np = img_as_np[:train_size], msk_as_np[:train_size]
-
-        # img1 = Image.fromarray(img_as_np[0])
+        orig_img_as_np, orig_msk_as_np = orig_img_as_np[:train_size], orig_msk_as_np[:train_size]
+        # img1 = Image.fromarray(img_as_np[3])
         # img1.show()
-
-        # flip {0: vertical, 1: horizontal, 2: both, 3: none}
 
         img_as_np, msk_as_np = flip(img_as_np, msk_as_np)
 
@@ -55,9 +57,9 @@ class CREMIDataTrain(Dataset):
         pix_add = randint(-20, 20)
         img_as_np = change_brightness(img_as_np, pix_add)
 
-        # img1_after_process = Image.fromarray(img_as_np[0])
+        # img1_after_process = Image.fromarray(img_as_np[3])
         # img1_after_process.show()
-        # lab1_after_process = Image.fromarray(msk_as_np[0])
+        # lab1_after_process = Image.fromarray(orig_img_as_np[3])
         # lab1_after_process.show()
 
         # Elastic distort {0: distort, 1:no distort}
@@ -70,11 +72,18 @@ class CREMIDataTrain(Dataset):
         # img_as_np = cropping(img_as_np, crop_size=self.in_size, dim1=y_loc, dim2=x_loc)
 
         # Normalize
-        img_as_np = normalization2(img_as_np.astype(float), max=1, min=0)
-        msk_as_np = msk_as_np / 255
+
+        img_as_np, orig_img_as_np = normalization2(img_as_np.astype(float), max=1, min=0), normalization2(
+            orig_img_as_np.astype(float), max=1, min=0)
+        msk_as_np, orig_msk_as_np = msk_as_np / 255, orig_msk_as_np / 255
 
         img_as_tensor = torch.from_numpy(img_as_np).float()
         msk_as_tensor = torch.from_numpy(msk_as_np).long()
+        orig_img_as_tensor, orig_msk_as_tensor = torch.from_numpy(orig_img_as_np).float(), torch.from_numpy(
+            orig_msk_as_np).long()
+
+        img_as_tensor = torch.cat((img_as_tensor, orig_img_as_tensor), 0)
+        msk_as_tensor = torch.cat((msk_as_tensor, orig_msk_as_tensor), 0)
 
         # lab1 = Image.fromarray(msk_as_img[0])
         # lab1.show()

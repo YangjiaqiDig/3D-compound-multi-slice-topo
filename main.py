@@ -102,25 +102,24 @@ if __name__ == "__main__":
                                                train_load,
                                                loss_fun)
 
-        # train_loss = train_loss / len(SEM_train)
         print('Epoch', str(i + 1), 'Train loss:', train_loss, "Train acc", train_acc)
 
         # Validation every 5 epoch
-        # if (i + 1) % 5 == 0:
-        #     val_acc, val_loss = validate_model(
-        #         [model_1, model_2, model_3],
-        #         validDataset,
-        #         loss_fun,
-        #         i + 1,
-        #         True,
-        #         image_save_path)
-        #     print('Val loss:', val_loss, "val acc:", val_acc)
-        #
-        #     values = [i + 1, train_loss, train_acc, val_loss, val_acc]
-        #     export_history(header, values, save_dir, save_file_name)
-        #
-        #     if (i + 1) % 100 == 0:  # save model every 10 epoch
-        #         save_models(model, model_save_dir, i + 1)
+        if (i + 1) % 5 == 0:
+            val_acc, val_loss = validate_model(
+                [model_1, model_2, model_3],
+                val_load,
+                loss_fun,
+                i + 1,
+                True,
+                image_save_path)
+            print('Val loss:', val_loss, "val acc:", val_acc)
+
+            values = [i + 1, train_loss, train_acc, val_loss, val_acc]
+            export_history(header, values, save_dir, save_file_name)
+
+            if (i + 1) % 100 == 0:  # save model every 10 epoch
+                save_models(model, model_save_dir, i + 1)
 
 """
 # Test

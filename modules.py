@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from PIL import Image
+from torch.autograd import Variable
 import os
 from post_processing import *
 
@@ -71,6 +72,34 @@ def get_loss_train(models, data_train, loss_fun):
 
     return total_acc / (batch + 1), total_loss / (batch + 1)
 
+def validate_model(models, data_val, loss_fun, epoch, make_prediction=True, save_folder_name='prediction'):
+    """
+        Validation run
+    """
+    # calculating validation loss
+    total_val_loss = 0
+    total_val_acc = 0
+    for batch, (data_1, data_2, data_3) in enumerate(data_val):
+        images_1, images_2, images_3, masks = data_1[0], data_2[0], data_3[0], data_1[1]
+        stacked_img = torch.Tensor([]).cuda()
+        for index in range(images_v.size()[1]):
+            with torch.no_grad():
+                image_v = images_v[:, index, :, :].unsqueeze(0).cuda()
+                mask_v = masks_v[:, index, :, :].squeeze(1).cuda()
+                # print(image_v.shape, mask_v.shape)
+                outputs_1, outputs_2, outputs_3 = models[0](images_1), models[1](images_2), models[2](images_3)
+                predict_map = max_outputs(outputs_1, outputs_2, outputs_3)
+                total_val_loss = total_val_loss + loss_fun(predict_map, mask_v).cpu().item()
+                # print('out', output_v.shape)
+                output_v = torch.argmax(predict_map, dim=1).float()
+                stacked_img = torch.cat((stacked_img, output_v))
+        if make_prediction:
+            im_name = batch  # TODO: Change this to real image name so we know
+            pred_msk = save_prediction_image(stacked_img, im_name, epoch, save_folder_name)
+            acc_val = accuracy_check(masks, pred_msk)
+            total_val_acc = total_val_acc + acc_val
+
+    return total_val_acc/(batch + 1), total_val_loss/((batch + 1)*4)
 
 def test_model(model_path, data_test, epoch, save_folder_name='prediction'):
     """
