@@ -4,9 +4,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 from modules import *
-
-
-# from save_history import *
+from save_history import *
 
 # np.set_printoptions(threshold=sys.maxsize)
 
@@ -80,13 +78,13 @@ if __name__ == "__main__":
     optimizer_2 = torch.optim.RMSprop(model_2.parameters(), lr=0.001)
     optimizer_3 = torch.optim.RMSprop(model_3.parameters(), lr=0.001)
 
-    header = ['epoch', 'train loss', 'train acc']
-    save_file_name = "history/RMS/history_RMS3.csv"
-    save_dir = "history/RMS"
+    header = ['epoch', 'train loss', 'train acc', 'val loss', 'val acc']
+    save_file_name = "history/UNET/history_UNET.csv"
+    save_dir = "history/UNET"
 
     # Saving images and models directories
-    model_save_dir = "history/RMS/saved_models3"
-    image_save_path = "history/RMS/result_images3"
+    model_save_dir = "history/UNET/saved_models3"
+    image_save_path = "history/UNET/result_images3"
 
     epoch = 30  # 2000
     # Train
@@ -118,8 +116,8 @@ if __name__ == "__main__":
             values = [i + 1, train_loss, train_acc, val_loss, val_acc]
             export_history(header, values, save_dir, save_file_name)
 
-            if (i + 1) % 100 == 0:  # save model every 10 epoch
-                save_models(model, model_save_dir, i + 1)
+            if (i + 1) % 10 == 0:  # save model every 10 epoch
+                save_models([model_1, model_2, model_3], model_save_dir, i + 1)
 
 """
 # Test
