@@ -69,7 +69,7 @@ if __name__ == "__main__":
     validDataset = prepareDataForLoader(validData)
 
     train_load = torch.utils.data.DataLoader(dataset=trainDataset, num_workers=3, batch_size=2, shuffle=True)
-    val_load = torch.utils.data.DataLoader(dataset=validDataset, num_workers=3, batch_size=2, shuffle=False)
+    val_load = torch.utils.data.DataLoader(dataset=validDataset, num_workers=3, batch_size=1, shuffle=True)
 
     model_1, model_2, model_3 = multiModel(single=1, size_1=SLICES_1, size_2=SLICES_2)
     # model = torch.nn.DataParallel(model, device_ids=list(
