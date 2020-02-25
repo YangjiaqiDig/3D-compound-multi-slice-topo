@@ -3,6 +3,9 @@ from dataset import *
 import torch
 import numpy as np
 import torch.nn as nn
+from modules import *
+from save_history import *
+
 
 # np.set_printoptions(threshold=sys.maxsize)
 
@@ -56,8 +59,7 @@ def prepareDataForLoader(data):
 
 
 if __name__ == "__main__":
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    print(torch.cuda.is_available(), "GPU: ", torch.cuda.device_count())
     SLICES_1 = 3
     SLICES_2 = 5
     trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
@@ -67,17 +69,12 @@ if __name__ == "__main__":
     validDataset = prepareDataForLoader(validData)
 
     train_load = torch.utils.data.DataLoader(dataset=trainDataset, num_workers=3, batch_size=2, shuffle=True)
-    val_load = torch.utils.data.DataLoader(dataset=validDataset, num_workers=3, batch_size=1, shuffle=False)
+    val_load = torch.utils.data.DataLoader(dataset=validDataset, num_workers=3, batch_size=1, shuffle=True)
 
     model_1, model_2, model_3 = multiModel(single=1, size_1=SLICES_1, size_2=SLICES_2)
-    if device.type == "cuda":
-        print("GPU: ", torch.cuda.device_count())
-        model_1 = torch.nn.DataParallel(model_1, device_ids=list(
-            range(torch.cuda.device_count()))).cuda()
-        model_2 = torch.nn.DataParallel(model_2, device_ids=list(
-            range(torch.cuda.device_count()))).cuda()
-        model_3 = torch.nn.DataParallel(model_3, device_ids=list(
-            range(torch.cuda.device_count()))).cuda()
+    model_1 = torch.nn.DataParallel(model_1, device_ids=[1]).cuda()
+    model_2 = torch.nn.DataParallel(model_2, device_ids=[1]).cuda()
+    model_3 = torch.nn.DataParallel(model_3, device_ids=[1]).cuda()
 
     loss_fun = nn.CrossEntropyLoss()
     optimizer_1 = torch.optim.RMSprop(model_1.parameters(), lr=0.001)
@@ -99,13 +96,12 @@ if __name__ == "__main__":
         train_multi_models([model_1, model_2, model_3],
                            train_load,
                            loss_fun,
-                           [optimizer_1, optimizer_2, optimizer_3],
-                           device)
+                           [optimizer_1, optimizer_2, optimizer_3])
 
         # just for print loss
         train_acc, train_loss = get_loss_train([model_1, model_2, model_3],
                                                train_load,
-                                               loss_fun, device)
+                                               loss_fun)
 
         print('Epoch', str(i + 1), 'Train loss:', train_loss, "Train acc", train_acc)
 
@@ -117,8 +113,7 @@ if __name__ == "__main__":
                 loss_fun,
                 i + 1,
                 True,
-                image_save_path,
-                device)
+                image_save_path)
             print('Val loss:', val_loss, "val acc:", val_acc)
 
             values = [i + 1, train_loss, train_acc, val_loss, val_acc]
