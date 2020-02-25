@@ -31,7 +31,7 @@ def accuracy_check_for_batch(masks, predictions, batch_size):
     return total_acc / batch_size
 
 
-def train_multi_models(models, data_train, loss_fun, optimizers):
+def train_multi_models(models, data_train, loss_fun, optimizers, device):
     for model in models:
         model.train()
 
@@ -40,11 +40,11 @@ def train_multi_models(models, data_train, loss_fun, optimizers):
         # print(images_1.shape, images_2.shape, images_3.shape, masks.shape)
         # ((2, 1, 1250, 1250), (2, 3, 1250, 1250), (2, 5, 1250, 1250), (2, 1250, 1250))
 
-        outputs_1, outputs_2, outputs_3 = models[0](images_1), models[1](images_2), models[2](images_3)
+        outputs_1, outputs_2, outputs_3 = models[0](images_1.to(device)), models[1](images_2.to(device)), models[2](images_3.to(device))
         predict_map = max_outputs(outputs_1, outputs_2, outputs_3)
         # predict_map = smooth_gaussian(predict_map)
 
-        loss = loss_fun(predict_map, masks)
+        loss = loss_fun(predict_map, masks.to(device))
         for optimizer in optimizers:
             optimizer.zero_grad()
         loss.backward()
@@ -52,7 +52,7 @@ def train_multi_models(models, data_train, loss_fun, optimizers):
             optimizer.step()
 
 
-def get_loss_train(models, data_train, loss_fun):
+def get_loss_train(models, data_train, loss_fun, device):
     for model in models:
         model.eval()
 
@@ -61,9 +61,10 @@ def get_loss_train(models, data_train, loss_fun):
     for batch, (data_1, data_2, data_3) in enumerate(data_train):
         images_1, images_2, images_3, masks = data_1[0], data_2[0], data_3[0], data_1[1]
         with torch.no_grad():
-            outputs_1, outputs_2, outputs_3 = models[0](images_1), models[1](images_2), models[2](images_3)
+            outputs_1, outputs_2, outputs_3 = models[0](images_1.to(device)), models[1](images_2.to(device)), models[2](
+                images_3.to(device))
             predict_map = max_outputs(outputs_1, outputs_2, outputs_3)
-            loss = loss_fun(predict_map, masks)
+            loss = loss_fun(predict_map, masks.to(device))
             pred_class = torch.argmax(predict_map, dim=1).float()
             acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images_1.size()[0])
             total_acc += acc
@@ -72,7 +73,7 @@ def get_loss_train(models, data_train, loss_fun):
     return total_acc / (batch + 1), total_loss / (batch + 1)
 
 
-def validate_model(models, data_val, loss_fun, epoch, make_prediction=True, save_folder_name='prediction'):
+def validate_model(models, data_val, loss_fun, epoch, make_prediction=True, save_folder_name='prediction', device='cpu'):
     """
         Validation run
     """
@@ -82,15 +83,15 @@ def validate_model(models, data_val, loss_fun, epoch, make_prediction=True, save
     for batch, (data_1, data_2, data_3) in enumerate(data_val):
         images_1, images_2, images_3, masks = data_1[0], data_2[0], data_3[0], data_1[1]
         with torch.no_grad():
-            outputs_1, outputs_2, outputs_3 = models[0](images_1), models[1](images_2), models[2](images_3)
+            outputs_1, outputs_2, outputs_3 = models[0](images_1.to(device)), models[1](images_2.to(device)), models[2](images_3.to(device))
             predict_map = max_outputs(outputs_1, outputs_2, outputs_3)
-            total_val_loss = total_val_loss + loss_fun(predict_map, masks).cpu().item()
+            total_val_loss = total_val_loss + loss_fun(predict_map, masks.to(device)).cpu().item()
             # print('out', predict_map.shape) # (1, 2, 1250, 1250)
             pred_class = torch.argmax(predict_map, dim=1).float() # (1, 1250, 1250)
         if make_prediction:
             im_name = batch
             pred_msk = save_prediction_image(pred_class, im_name, epoch, save_folder_name)
-            acc_val = accuracy_check(masks, pred_msk)
+            acc_val = accuracy_check(masks.cpu(), pred_msk)
             total_val_acc += acc_val
 
     return total_val_acc / (batch + 1), total_val_loss / (batch + 1)
