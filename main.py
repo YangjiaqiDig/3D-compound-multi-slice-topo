@@ -1,5 +1,7 @@
 from model import U_Net
 from dataset import *
+from modules import *
+from save_history import *
 import torch
 import numpy as np
 import torch.nn as nn
@@ -57,7 +59,7 @@ def prepareDataForLoader(data):
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+#    device = torch.device("cpu")
     SLICES_1 = 3
     SLICES_2 = 5
     trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
@@ -80,9 +82,9 @@ if __name__ == "__main__":
             range(torch.cuda.device_count()))).cuda()
 
     loss_fun = nn.CrossEntropyLoss()
-    optimizer_1 = torch.optim.RMSprop(model_1.parameters(), lr=0.001)
-    optimizer_2 = torch.optim.RMSprop(model_2.parameters(), lr=0.001)
-    optimizer_3 = torch.optim.RMSprop(model_3.parameters(), lr=0.001)
+    optimizer_1 = torch.optim.RMSprop(model_1.parameters(), lr=0.0001)
+    optimizer_2 = torch.optim.RMSprop(model_2.parameters(), lr=0.0001)
+    optimizer_3 = torch.optim.RMSprop(model_3.parameters(), lr=0.0001)
 
     header = ['epoch', 'train loss', 'train acc', 'val loss', 'val acc']
     save_file_name = "history/UNET/history_UNET.csv"

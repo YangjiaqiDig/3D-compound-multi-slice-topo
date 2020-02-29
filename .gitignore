@@ -59,4 +59,5 @@ target/
 
 # Too big dataset
 train/
+history/
 train_wrongDt
