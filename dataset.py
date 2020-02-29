@@ -37,11 +37,11 @@ class CREMIDataTrain(Dataset):
         img_as_np, orig_img_as_np = np.stack(img_as_np, axis=0), np.stack(orig_img_as_np, axis=0)
         msk_as_np, orig_msk_as_np = np.stack(msk_as_np, axis=0), np.stack(orig_msk_as_np, axis=0)
         img1 = Image.fromarray(msk_as_np[101])
+        # img1.show()
 
         train_size = int(img_as_np.shape[0] * TRAIN_VALID_RATIO)
         img_as_np, msk_as_np = img_as_np[:train_size], msk_as_np[:train_size]
         orig_img_as_np, orig_msk_as_np = orig_img_as_np[:train_size], orig_msk_as_np[:train_size]
-
 
         img_as_np, msk_as_np = flip(img_as_np, msk_as_np)
 
@@ -98,18 +98,22 @@ class CREMIDataTrain(Dataset):
 
 
 class ComDataset(Dataset):
-    def __init__(self, data_1, data_2, data_3):
-        self.data_1 = data_1
-        self.data_2 = data_2
-        self.data_3 = data_3
+    def __init__(self, dataToSlice, SLICES_COLLECT):
+        self.n_slices = len(SLICES_COLLECT)
+        self.data = dataToSlice
+        # for i, data in enumerate(dataToSlice):
+        #     self.data.append(data)
 
     def __getitem__(self, index):
-        x1, x2, x3 = self.data_1[index], self.data_2[index], self.data_3[index]
-
-        return x1, x2, x3
+        if self.n_slices == 1:
+            return self.data[0][index]
+        elif self.n_slices == 2:
+            return self.data[0][index], self.data[1][index]
+        elif self.n_slices == 3:
+            return self.data[0][index], self.data[1][index], self.data[2][index]
 
     def __len__(self):
-        return len(self.data_1)
+        return len(self.data[0])
 
 
 class CREMIDataVal(Dataset):

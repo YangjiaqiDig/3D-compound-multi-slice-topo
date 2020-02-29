@@ -59,6 +59,6 @@ target/
 
 # Too big dataset
 train/
-history/
+history*/
 train_wrongDt
 dataset_cache_*
