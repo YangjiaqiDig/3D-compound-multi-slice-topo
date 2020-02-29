@@ -20,8 +20,8 @@ def export_history(header, value, folder, file_name):
     file.close()
 
 
-def save_models(models, path, epoch):
+def save_models(models, path, epoch, SLICES_COLLECT):
     if not os.path.exists(path):
         os.makedirs(path)
-    for i in range(3):
+    for i in range(len(SLICES_COLLECT)):
         torch.save(models[i], path + "/model_epoch_{0}_{1}.pwf".format(epoch, i+1))

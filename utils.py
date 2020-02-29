@@ -6,18 +6,18 @@ from dataset import *
 logger = logging.getLogger(__file__)
 
 
-def toSlicesGroupDataset(train, label, size):
-    print('SLICES: ', size)
-    if not size:
+def toSlicesGroupDataset(train, label, slice):
+    print('SLICES: ', slice)
+    if slice == 1:
         return [[train[i].unsqueeze(0), label[i]] for i in range(label.shape[0])]
 
-    paddingSize = int(size / 2)
+    paddingSize = int(slice / 2)
     paddings = torch.zeros(paddingSize, train.shape[2], train.shape[2])
     train = torch.cat((paddings, train, paddings))
 
     new_train = []
-    for i in range(0, train.shape[0] - size + 1):
-        new_train.append(train[i:i + size])
+    for i in range(0, train.shape[0] - slice + 1):
+        new_train.append(train[i:i + slice])
 
     new_train = torch.stack(new_train)
 
@@ -28,14 +28,13 @@ def toSlicesGroupDataset(train, label, size):
     return train_data
 
 
-def prepareDataForLoader(data):
+def prepareDataForLoader(data, SLICES_COLLECT):
     train, label = data.__getitem__()
+    dataToSlice = []
+    for i, SLICE in enumerate(SLICES_COLLECT):
+        dataToSlice.append(toSlicesGroupDataset(train, label, SLICE))
 
-    train_data_1 = toSlicesGroupDataset(train, label, 0)
-    train_data_2 = toSlicesGroupDataset(train, label, SLICES_1)
-    train_data_3 = toSlicesGroupDataset(train, label, SLICES_2)
-
-    dataset = ComDataset(train_data_1, train_data_2, train_data_3)
+    dataset = ComDataset(dataToSlice, SLICES_COLLECT)
     """
     x1, x2, x3 = dataset.__getitem__(0)
     # print(len(x1), x1[0].shape, x1[1].shape)  # (2, (1, 1250, 1250), (1250, 1250))
@@ -46,11 +45,13 @@ def prepareDataForLoader(data):
     return dataset
 
 
-def get_dataset(dataset_path, dataset_cache, SLICES_1, SLICES_2):
+def get_dataset(dataset_path, dataset_cache, SLICES_COLLECT):
     train_path = dataset_path + '/train-volume.tif'
     val_path = dataset_path + '/train-labels.tif'
-    dataset_cache = dataset_cache + '_1' + str(SLICES_1) + str(
-        SLICES_2)
+    for SLICE in SLICES_COLLECT:
+        extension = str(SLICE)
+        dataset_cache = dataset_cache + '_' + str(extension)
+
     if dataset_cache and os.path.isfile(dataset_cache):
         logger.info("Load enhanced dataset before DataLoader from cache at %s", dataset_cache)
         dataset = torch.load(dataset_cache)
@@ -60,8 +61,8 @@ def get_dataset(dataset_path, dataset_cache, SLICES_1, SLICES_2):
         trainData = CREMIDataTrain(train_path, val_path)
         validData = CREMIDataVal(train_path, val_path)
 
-        trainDataset = prepareDataForLoader(trainData)
-        validDataset = prepareDataForLoader(validData)
+        trainDataset = prepareDataForLoader(trainData, SLICES_COLLECT)
+        validDataset = prepareDataForLoader(validData, SLICES_COLLECT)
 
         logger.info("list train and valid as the dataset")
         dataset = [trainDataset, validDataset]
@@ -72,12 +73,13 @@ def get_dataset(dataset_path, dataset_cache, SLICES_1, SLICES_2):
 
 if __name__ == "__main__":
     # A full forward pass
-    SLICES_1 = 3
-    SLICES_2 = 5
     dataset_cache = 'dataset_cache'
-    trainDataset, validDataset = get_dataset('train', dataset_cache, SLICES_1, SLICES_2)
+    SLICES_COLLECT = [3]
+    trainDataset, validDataset = get_dataset('train', dataset_cache, SLICES_COLLECT)
 
-    x1, x2, x3 = validDataset.__getitem__(0)
+    x1 = trainDataset.__getitem__(0)
+    print(x1)
+    # print(x2)
     print(len(x1), x1[0].shape, x1[1].shape)  # (2, (1, 1250, 1250), (1250, 1250))
-    print(len(x2), x2[0].shape, x2[1].shape)  # (2, (3, 1250, 1250), (1250, 1250))
-    print(len(x3), x3[0].shape, x3[1].shape)  # (2, (5, 1250, 1250), (1250, 1250))
+    # print(len(x2), x2[0].shape, x2[1].shape)  # (2, (3, 1250, 1250), (1250, 1250))
+    # print(len(x3), x3[0].shape, x3[1].shape)  # (2, (5, 1250, 1250), (1250, 1250))

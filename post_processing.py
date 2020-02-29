@@ -7,11 +7,14 @@ import numpy as np
 import math
 
 
-def max_outputs(outputs_1, outputs_2, outputs_3):
+def max_outputs(outputs):
     # outputs_i with prediction probability map, (2, 2, 1250, 1250) -> (batch, classes, dim, dim)
     # max select from classes logits
-    probability_map = torch.max(torch.max(outputs_1, outputs_2), outputs_3)
-
+    # at most 3 predict maps from 3 models now.
+    if len(outputs) == 3:
+        probability_map = torch.max(torch.max(outputs[0], outputs[1]), outputs[2])
+    else:
+        probability_map = torch.max(outputs[0], outputs[1])
     return probability_map
 
 
@@ -78,7 +81,6 @@ if __name__ == "__main__":
     print(img_as_np)
     img_cont = Image.fromarray(img_as_np)
     img_cont.show()
-
 
     image_name = glob.glob("train_wrongDt/label/1.png")
     image = Image.open(image_name[0])
