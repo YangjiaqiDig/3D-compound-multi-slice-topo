@@ -63,7 +63,7 @@ if __name__ == "__main__":
     SLICES_1 = 3
     SLICES_2 = 5
     trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
-    validData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
+    validData = CREMIDataVal('train/train-volume.tif', 'train/train-labels.tif')
 
     trainDataset = prepareDataForLoader(trainData)
     validDataset = prepareDataForLoader(validData)

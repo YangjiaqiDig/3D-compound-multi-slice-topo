@@ -141,6 +141,7 @@ class CREMIDataVal(Dataset):
 
         img_as_tensor = torch.from_numpy(img_as_np).float()
         msk_as_tensor = torch.from_numpy(msk_as_np).long()
+        print(img_as_tensor.shape)
 
         return (img_as_tensor, msk_as_tensor)
 
