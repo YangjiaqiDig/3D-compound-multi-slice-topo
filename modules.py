@@ -91,7 +91,7 @@ def validate_model(models, data_val, loss_fun, epoch, make_prediction=True, save
         if make_prediction:
             im_name = batch
             pred_msk = save_prediction_image(pred_class, im_name, epoch, save_folder_name)
-            acc_val = accuracy_check(masks.cpu(), pred_msk)
+            acc_val = accuracy_check(masks.cpu(), pred_class.cpu())
             total_val_acc += acc_val
 
     return total_val_acc / (batch + 1), total_val_loss / (batch + 1)
@@ -140,7 +140,7 @@ def save_prediction_image(pred_class, im_name, epoch, save_folder_name="result_i
     # Save Image!
     export_name = str(im_name) + '.png'
     img.save(desired_path + export_name)
-    return img
+    return img_as_np
 
 
 def polarize(img):

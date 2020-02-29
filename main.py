@@ -1,33 +1,13 @@
 from model import U_Net
 from dataset import *
 from modules import *
+from utils import *
 from save_history import *
 import torch
 import numpy as np
 import torch.nn as nn
 
 # np.set_printoptions(threshold=sys.maxsize)
-
-def toSlicesGroupDataset(train, label, size):
-    if not size:
-        return [[train[i].unsqueeze(0), label[i]] for i in range(label.shape[0])]
-
-    paddingSize = int(size / 2)
-    paddings = torch.zeros(paddingSize, train.shape[2], train.shape[2])
-    train = torch.cat((paddings, train, paddings))
-
-    new_train = []
-    for i in range(0, train.shape[0] - size + 1):
-        new_train.append(train[i:i + size])
-
-    new_train = torch.stack(new_train)
-
-    train_data = []
-    for i in range(label.shape[0]):
-        train_data.append([new_train[i], label[i]])
-
-    return train_data
-
 
 def multiModel(single=1, size_1=0, size_2=0):
     model_single = U_Net(in_channels=single, out_channels=32)
@@ -39,34 +19,13 @@ def multiModel(single=1, size_1=0, size_2=0):
     return model_single, model_1, model_2
 
 
-def prepareDataForLoader(data):
-    train, label = data.__getitem__()
-
-    train_data_1 = toSlicesGroupDataset(train, label, 0)
-    train_data_2 = toSlicesGroupDataset(train, label, SLICES_1)
-    train_data_3 = toSlicesGroupDataset(train, label, SLICES_2)
-
-    dataset = ComDataset(train_data_1, train_data_2, train_data_3)
-    """
-    x1, x2, x3 = dataset.__getitem__(0)
-    # print(len(x1), x1[0].shape, x1[1].shape)  # (2, (1, 1250, 1250), (1250, 1250))
-    # print(len(x2), x2[0].shape, x2[1].shape)  # (2, (3, 1250, 1250), (1250, 1250))
-    # print(len(x3), x3[0].shape, x3[1].shape)  # (2, (5, 1250, 1250), (1250, 1250))
-    """
-
-    return dataset
-
-
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#    device = torch.device("cpu")
     SLICES_1 = 3
     SLICES_2 = 5
-    trainData = CREMIDataTrain('train/train-volume.tif', 'train/train-labels.tif')
-    validData = CREMIDataVal('train/train-volume.tif', 'train/train-labels.tif')
-
-    trainDataset = prepareDataForLoader(trainData)
-    validDataset = prepareDataForLoader(validData)
+    dataset_path = 'train'
+    dataset_cache = 'dataset_cache'
+    trainDataset, validDataset = get_dataset(dataset_path, dataset_cache, SLICES_1, SLICES_2)
 
     train_load = torch.utils.data.DataLoader(dataset=trainDataset, num_workers=3, batch_size=2, shuffle=True)
     val_load = torch.utils.data.DataLoader(dataset=validDataset, num_workers=3, batch_size=1, shuffle=False)

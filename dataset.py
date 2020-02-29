@@ -36,12 +36,12 @@ class CREMIDataTrain(Dataset):
 
         img_as_np, orig_img_as_np = np.stack(img_as_np, axis=0), np.stack(orig_img_as_np, axis=0)
         msk_as_np, orig_msk_as_np = np.stack(msk_as_np, axis=0), np.stack(orig_msk_as_np, axis=0)
+        img1 = Image.fromarray(msk_as_np[101])
 
         train_size = int(img_as_np.shape[0] * TRAIN_VALID_RATIO)
         img_as_np, msk_as_np = img_as_np[:train_size], msk_as_np[:train_size]
         orig_img_as_np, orig_msk_as_np = orig_img_as_np[:train_size], orig_msk_as_np[:train_size]
-        # img1 = Image.fromarray(img_as_np[3])
-        # img1.show()
+
 
         img_as_np, msk_as_np = flip(img_as_np, msk_as_np)
 
@@ -141,7 +141,6 @@ class CREMIDataVal(Dataset):
 
         img_as_tensor = torch.from_numpy(img_as_np).float()
         msk_as_tensor = torch.from_numpy(msk_as_np).long()
-        print(img_as_tensor.shape)
 
         return (img_as_tensor, msk_as_tensor)
 
