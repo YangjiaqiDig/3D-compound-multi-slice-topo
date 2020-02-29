@@ -129,8 +129,9 @@ def save_prediction_image(pred_class, im_name, epoch, save_folder_name="result_i
     img_as_np = pred_class.cpu().data.numpy()
 
     img_as_np = polarize(img_as_np) * 255
-    img_as_np = img_as_np.astype('uint8')
-    img = Image.fromarray(img_as_np)
+    img_as_np = img_as_np.astype(np.uint8)
+#    print(img_as_np, img_as_np.shape)
+    img = Image.fromarray(img_as_np.squeeze(0))
     # organize images in every epoch
     desired_path = save_folder_name + '/epoch_' + str(epoch) + '/'
     # Create the path if it does not exist
