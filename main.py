@@ -20,7 +20,7 @@ def multiModel(SLICES_COLLECT):
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    SLICES_COLLECT = [5]
+    SLICES_COLLECT = [1]
     dataset_path = 'train'
     dataset_cache = 'dataset_cache'
     trainDataset, validDataset = get_dataset(dataset_path, dataset_cache, SLICES_COLLECT)

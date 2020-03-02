@@ -42,8 +42,8 @@ def train_multi_models(models, data_train, loss_fun, optimizers, device, SLICES_
 
             outputs_1, outputs_2, outputs_3 = models[0](images_1.to(device)), models[1](images_2.to(device)), models[2](
                 images_3.to(device))
-            predict_map = max_outputs([outputs_1, outputs_2, outputs_3])
-            # predict_map = smooth_gaussian(predict_map)
+            predict_map = mean_outputs([outputs_1, outputs_2, outputs_3])
+            # predict_map = smooth_gaussian(predict_map, device)
 
             loss = loss_fun(predict_map, masks.to(device))
             for optimizer in optimizers:
@@ -55,7 +55,7 @@ def train_multi_models(models, data_train, loss_fun, optimizers, device, SLICES_
         for batch, (data_1, data_2) in enumerate(data_train):
             images_1, images_2, masks = data_1[0], data_2[0], data_1[1]
             outputs_1, outputs_2 = models[0](images_1.to(device)), models[1](images_2.to(device))
-            predict_map = max_outputs([outputs_1, outputs_2])
+            predict_map = mean_outputs([outputs_1, outputs_2])
             # predict_map = smooth_gaussian(predict_map)
 
             loss = loss_fun(predict_map, masks.to(device))
@@ -91,7 +91,8 @@ def get_loss_train(models, data_train, loss_fun, device, SLICES_COLLECT):
                 outputs_1, outputs_2, outputs_3 = models[0](images_1.to(device)), models[1](images_2.to(device)), \
                                                   models[2](
                                                       images_3.to(device))
-                predict_map = max_outputs([outputs_1, outputs_2, outputs_3])
+                predict_map = mean_outputs([outputs_1, outputs_2, outputs_3])
+                # predict_map = smooth_gaussian(predict_map)
                 loss = loss_fun(predict_map, masks.to(device))
                 pred_class = torch.argmax(predict_map, dim=1).float()
                 acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images_1.size()[0])
@@ -102,7 +103,8 @@ def get_loss_train(models, data_train, loss_fun, device, SLICES_COLLECT):
             images_1, images_2, masks = data_1[0], data_2[0], data_1[1]
             with torch.no_grad():
                 outputs_1, outputs_2 = models[0](images_1.to(device)), models[1](images_2.to(device))
-                predict_map = max_outputs([outputs_1, outputs_2])
+                predict_map = mean_outputs([outputs_1, outputs_2])
+                # predict_map = smooth_gaussian(predict_map)
                 loss = loss_fun(predict_map, masks.to(device))
                 pred_class = torch.argmax(predict_map, dim=1).float()
                 acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images_1.size()[0])
@@ -113,6 +115,7 @@ def get_loss_train(models, data_train, loss_fun, device, SLICES_COLLECT):
             images, masks = data[0], data[1]
             with torch.no_grad():
                 predict_map = models[0](images.to(device))
+                # predict_map = smooth_gaussian(predict_map)
                 loss = loss_fun(predict_map, masks.to(device))
                 pred_class = torch.argmax(predict_map, dim=1).float()
                 acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images.size()[0])
@@ -137,7 +140,8 @@ def validate_model(models, data_val, loss_fun, epoch, make_prediction=True, save
                 outputs_1, outputs_2, outputs_3 = models[0](images_1.to(device)), models[1](images_2.to(device)), \
                                                   models[2](
                                                       images_3.to(device))
-                predict_map = max_outputs([outputs_1, outputs_2, outputs_3])
+                predict_map = mean_outputs([outputs_1, outputs_2, outputs_3])
+                # predict_map = smooth_gaussian(predict_map)
                 total_val_loss = total_val_loss + loss_fun(predict_map, masks.to(device)).cpu().item()
                 # print('out', predict_map.shape) # (1, 2, 1250, 1250)
                 pred_class = torch.argmax(predict_map, dim=1).float()  # (1, 1250, 1250)
@@ -151,7 +155,8 @@ def validate_model(models, data_val, loss_fun, epoch, make_prediction=True, save
             images_1, images_2, masks = data_1[0], data_2[0], data_1[1]
             with torch.no_grad():
                 outputs_1, outputs_2 = models[0](images_1.to(device)), models[1](images_2.to(device))
-                predict_map = max_outputs([outputs_1, outputs_2])
+                predict_map = mean_outputs([outputs_1, outputs_2])
+                # predict_map = smooth_gaussian(predict_map)
                 total_val_loss = total_val_loss + loss_fun(predict_map, masks.to(device)).cpu().item()
                 # print('out', predict_map.shape) # (1, 2, 1250, 1250)
                 pred_class = torch.argmax(predict_map, dim=1).float()  # (1, 1250, 1250)
@@ -165,6 +170,7 @@ def validate_model(models, data_val, loss_fun, epoch, make_prediction=True, save
             images, masks = data[0], data[1]
             with torch.no_grad():
                 predict_map = models[0](images.to(device))
+                # predict_map = smooth_gaussian(predict_map)
                 total_val_loss = total_val_loss + loss_fun(predict_map, masks.to(device)).cpu().item()
                 # print('out', predict_map.shape) # (1, 2, 1250, 1250)
                 pred_class = torch.argmax(predict_map, dim=1).float()  # (1, 1250, 1250)
