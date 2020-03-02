@@ -34,15 +34,7 @@ def prepareDataForLoader(data, SLICES_COLLECT):
     for i, SLICE in enumerate(SLICES_COLLECT):
         dataToSlice.append(toSlicesGroupDataset(train, label, SLICE))
 
-    dataset = ComDataset(dataToSlice, SLICES_COLLECT)
-    """
-    x1, x2, x3 = dataset.__getitem__(0)
-    # print(len(x1), x1[0].shape, x1[1].shape)  # (2, (1, 1250, 1250), (1250, 1250))
-    # print(len(x2), x2[0].shape, x2[1].shape)  # (2, (3, 1250, 1250), (1250, 1250))
-    # print(len(x3), x3[0].shape, x3[1].shape)  # (2, (5, 1250, 1250), (1250, 1250))
-    """
-
-    return dataset
+    return dataToSlice
 
 
 def get_dataset(dataset_path, dataset_cache, SLICES_COLLECT):
@@ -68,6 +60,13 @@ def get_dataset(dataset_path, dataset_cache, SLICES_COLLECT):
         dataset = [trainDataset, validDataset]
         torch.save(dataset, dataset_cache)
 
+    dataset = [ComDataset(dataset[0], SLICES_COLLECT), ComDataset(dataset[1], SLICES_COLLECT)]
+    """
+    x1, x2, x3 = dataset.__getitem__(0)
+    # print(len(x1), x1[0].shape, x1[1].shape)  # (2, (1, 1250, 1250), (1250, 1250))
+    # print(len(x2), x2[0].shape, x2[1].shape)  # (2, (3, 1250, 1250), (1250, 1250))
+    # print(len(x3), x3[0].shape, x3[1].shape)  # (2, (5, 1250, 1250), (1250, 1250))
+    """
     return dataset
 
 
