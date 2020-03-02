@@ -25,8 +25,8 @@ if __name__ == "__main__":
     dataset_cache = 'dataset_cache'
     trainDataset, validDataset = get_dataset(dataset_path, dataset_cache, SLICES_COLLECT)
 
-    train_load = torch.utils.data.DataLoader(dataset=trainDataset, num_workers=3, batch_size=2, shuffle=True)
-    val_load = torch.utils.data.DataLoader(dataset=validDataset, num_workers=3, batch_size=1, shuffle=False)
+    train_load = torch.utils.data.DataLoader(dataset=trainDataset, num_workers=6, batch_size=2, shuffle=True)
+    val_load = torch.utils.data.DataLoader(dataset=validDataset, num_workers=6, batch_size=1, shuffle=False)
 
     models = multiModel(SLICES_COLLECT)
     if device.type == "cuda":
