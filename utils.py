@@ -59,7 +59,8 @@ def get_dataset(dataset_path, dataset_cache, SLICES_COLLECT):
         logger.info("list train and valid as the dataset")
         dataset = [trainDataset, validDataset]
         torch.save(dataset, dataset_cache)
-
+    # x1 = ComDataset(dataset[0])
+    # print(len(x1),len(x1[0]), x1[0][1].shape)
     dataset = [ComDataset(dataset[0], SLICES_COLLECT), ComDataset(dataset[1], SLICES_COLLECT)]
     """
     x1, x2, x3 = dataset.__getitem__(0)

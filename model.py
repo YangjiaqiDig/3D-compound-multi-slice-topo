@@ -43,7 +43,7 @@ class U_Net(nn.Module):
         # Final output
         self.conv_final = nn.Conv2d(in_channels=32, out_channels=2,
                                     kernel_size=1, padding=0, stride=1)
-
+        self.softmax = nn.Softmax2d()
 
     def forward(self, x):
         # print('input', x.shape)
@@ -110,14 +110,16 @@ class U_Net(nn.Module):
         # Final output
         x = self.conv_final(x)
         # print('final: ', x.shape)
+        likelihood_map = self.softmax(x)[:,0,:,:]
+        # print(likelihood_map)
 
-        return x
+        return x, likelihood_map
 
 
 if __name__ == "__main__":
     # A full forward pass
-    im = torch.randn(2, 3, 1250, 1250)
-    model = U_Net(3, 32)
+    im = torch.randn(2, 1, 1250, 1250)
+    model = U_Net(1, 32)
     x = model(im)
     # print(x.shape)
     del model
