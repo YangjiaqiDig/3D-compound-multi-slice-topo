@@ -34,48 +34,35 @@ def accuracy_check_for_batch(masks, predictions, batch_size):
 def train_multi_models(models, data_train, loss_fun, optimizers, device, SLICES_COLLECT):
     for model in models:
         model.train()
-    if len(SLICES_COLLECT) == 3:
-        for batch, (data_1, data_2, data_3) in enumerate(data_train):
-            images_1, images_2, images_3, masks = data_1[0], data_2[0], data_3[0], data_1[1]
+
+    for batch, data in enumerate(data_train):
+        if len(SLICES_COLLECT) == 3:
+            images_1, images_2, images_3, masks = data[0][0], data[1][0], data[2][0], data[0][1]
             # print(images_1.shape, images_2.shape, images_3.shape, masks.shape)
             # ((2, 1, 1250, 1250), (2, 3, 1250, 1250), (2, 5, 1250, 1250), (2, 1250, 1250))
 
-            outputs_1, outputs_2, outputs_3 = models[0](images_1.to(device)), models[1](images_2.to(device)), models[2](
-                images_3.to(device))
+            outputs_1, likelihoodMap_1 = models[0](images_1.to(device))
+            outputs_2, likelihoodMap_2 = models[1](images_2.to(device))
+            outputs_3, likelihoodMap_3 = models[2](images_3.to(device))
             predict_map = mean_outputs([outputs_1, outputs_2, outputs_3])
-            # predict_map = smooth_gaussian(predict_map, device)
 
-            loss = loss_fun(predict_map, masks.to(device))
-            for optimizer in optimizers:
-                optimizer.zero_grad()
-            loss.backward()
-            for optimizer in optimizers:
-                optimizer.step()
-    elif len(SLICES_COLLECT) == 2:
-        for batch, (data_1, data_2) in enumerate(data_train):
-            images_1, images_2, masks = data_1[0], data_2[0], data_1[1]
-            outputs_1, outputs_2 = models[0](images_1.to(device)), models[1](images_2.to(device))
+        elif len(SLICES_COLLECT) == 2:
+            images_1, images_2, masks = data[0][0], data[1][0], data[0][1]
+            outputs_1, likelihoodMap_1 = models[0](images_1.to(device))
+            outputs_2, likelihoodMap_2 = models[1](images_2.to(device))
             predict_map = mean_outputs([outputs_1, outputs_2])
-            # predict_map = smooth_gaussian(predict_map)
 
-            loss = loss_fun(predict_map, masks.to(device))
-            for optimizer in optimizers:
-                optimizer.zero_grad()
-            loss.backward()
-            for optimizer in optimizers:
-                optimizer.step()
-    elif len(SLICES_COLLECT) == 1:
-        for batch, data in enumerate(data_train):
+        elif len(SLICES_COLLECT) == 1:
             images, masks = data[0], data[1]
-            predict_map = models[0](images.to(device))
-            # predict_map = smooth_gaussian(predict_map)
+            predict_map, likelihoodMap = models[0](images.to(device))
 
-            loss = loss_fun(predict_map, masks.to(device))
-            for optimizer in optimizers:
-                optimizer.zero_grad()
-            loss.backward()
-            for optimizer in optimizers:
-                optimizer.step()
+        # predict_map = smooth_gaussian(predict_map, device)
+        loss = loss_fun(predict_map, masks.to(device))
+        for optimizer in optimizers:
+            optimizer.zero_grad()
+        loss.backward()
+        for optimizer in optimizers:
+            optimizer.step()
 
 
 def get_loss_train(models, data_train, loss_fun, device, SLICES_COLLECT):
@@ -84,13 +71,13 @@ def get_loss_train(models, data_train, loss_fun, device, SLICES_COLLECT):
 
     total_acc = 0
     total_loss = 0
-    if len(SLICES_COLLECT) == 3:
-        for batch, (data_1, data_2, data_3) in enumerate(data_train):
-            images_1, images_2, images_3, masks = data_1[0], data_2[0], data_3[0], data_1[1]
+    for batch, data in enumerate(data_train):
+        if len(SLICES_COLLECT) == 3:
+            images_1, images_2, images_3, masks = data[0][0], data[1][0], data[2][0], data[0][1]
             with torch.no_grad():
-                outputs_1, outputs_2, outputs_3 = models[0](images_1.to(device)), models[1](images_2.to(device)), \
-                                                  models[2](
-                                                      images_3.to(device))
+                outputs_1, likelihoodMap_1 = models[0](images_1.to(device))
+                outputs_2, likelihoodMap_2 = models[1](images_2.to(device))
+                outputs_3, likelihoodMap_3 = models[2](images_3.to(device))
                 predict_map = mean_outputs([outputs_1, outputs_2, outputs_3])
                 # predict_map = smooth_gaussian(predict_map)
                 loss = loss_fun(predict_map, masks.to(device))
@@ -98,11 +85,11 @@ def get_loss_train(models, data_train, loss_fun, device, SLICES_COLLECT):
                 acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images_1.size()[0])
                 total_acc += acc
                 total_loss += loss.cpu().item()
-    elif len(SLICES_COLLECT) == 2:
-        for batch, (data_1, data_2) in enumerate(data_train):
-            images_1, images_2, masks = data_1[0], data_2[0], data_1[1]
+        elif len(SLICES_COLLECT) == 2:
+            images_1, images_2, masks = data[0][0], data[1][0], data[0][1]
             with torch.no_grad():
-                outputs_1, outputs_2 = models[0](images_1.to(device)), models[1](images_2.to(device))
+                outputs_1, likelihoodMap_1 = models[0](images_1.to(device))
+                outputs_2, likelihoodMap_2 = models[1](images_2.to(device))
                 predict_map = mean_outputs([outputs_1, outputs_2])
                 # predict_map = smooth_gaussian(predict_map)
                 loss = loss_fun(predict_map, masks.to(device))
@@ -110,17 +97,16 @@ def get_loss_train(models, data_train, loss_fun, device, SLICES_COLLECT):
                 acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images_1.size()[0])
                 total_acc += acc
                 total_loss += loss.cpu().item()
-    elif len(SLICES_COLLECT) == 1:
-        for batch, data in enumerate(data_train):
+        elif len(SLICES_COLLECT) == 1:
             images, masks = data[0], data[1]
             with torch.no_grad():
                 predict_map = models[0](images.to(device))
                 # predict_map = smooth_gaussian(predict_map)
-                loss = loss_fun(predict_map, masks.to(device))
-                pred_class = torch.argmax(predict_map, dim=1).float()
-                acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images.size()[0])
-                total_acc += acc
-                total_loss += loss.cpu().item()
+        loss = loss_fun(predict_map, masks.to(device))
+        pred_class = torch.argmax(predict_map, dim=1).float()
+        acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images.size()[0])
+        total_acc += acc
+        total_loss += loss.cpu().item()
 
     return total_acc / (batch + 1), total_loss / (batch + 1)
 
