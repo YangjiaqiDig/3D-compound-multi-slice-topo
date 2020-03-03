@@ -79,34 +79,26 @@ def get_loss_train(models, data_train, loss_fun, device, SLICES_COLLECT):
                 outputs_2, likelihoodMap_2 = models[1](images_2.to(device))
                 outputs_3, likelihoodMap_3 = models[2](images_3.to(device))
                 predict_map = mean_outputs([outputs_1, outputs_2, outputs_3])
-                # predict_map = smooth_gaussian(predict_map)
-                loss = loss_fun(predict_map, masks.to(device))
-                pred_class = torch.argmax(predict_map, dim=1).float()
-                acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images_1.size()[0])
-                total_acc += acc
-                total_loss += loss.cpu().item()
+
         elif len(SLICES_COLLECT) == 2:
             images_1, images_2, masks = data[0][0], data[1][0], data[0][1]
             with torch.no_grad():
                 outputs_1, likelihoodMap_1 = models[0](images_1.to(device))
                 outputs_2, likelihoodMap_2 = models[1](images_2.to(device))
                 predict_map = mean_outputs([outputs_1, outputs_2])
-                # predict_map = smooth_gaussian(predict_map)
-                loss = loss_fun(predict_map, masks.to(device))
-                pred_class = torch.argmax(predict_map, dim=1).float()
-                acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images_1.size()[0])
-                total_acc += acc
-                total_loss += loss.cpu().item()
+
         elif len(SLICES_COLLECT) == 1:
             images, masks = data[0], data[1]
             with torch.no_grad():
-                predict_map = models[0](images.to(device))
-                # predict_map = smooth_gaussian(predict_map)
-        loss = loss_fun(predict_map, masks.to(device))
-        pred_class = torch.argmax(predict_map, dim=1).float()
-        acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), images.size()[0])
-        total_acc += acc
-        total_loss += loss.cpu().item()
+                predict_map, likelihoodMap = models[0](images.to(device))
+
+        with torch.no_grad():
+            # predict_map = smooth_gaussian(predict_map)
+            loss = loss_fun(predict_map, masks.to(device))
+            pred_class = torch.argmax(predict_map, dim=1).float()
+            acc = accuracy_check_for_batch(masks.cpu(), pred_class.cpu(), masks.size()[0])
+            total_acc += acc
+            total_loss += loss.cpu().item()
 
     return total_acc / (batch + 1), total_loss / (batch + 1)
 
@@ -119,47 +111,30 @@ def validate_model(models, data_val, loss_fun, epoch, make_prediction=True, save
     # calculating validation loss
     total_val_loss = 0
     total_val_acc = 0
-    if len(SLICES_COLLECT) == 3:
-        for batch, (data_1, data_2, data_3) in enumerate(data_val):
-            images_1, images_2, images_3, masks = data_1[0], data_2[0], data_3[0], data_1[1]
+    for batch, data in enumerate(data_val):
+        if len(SLICES_COLLECT) == 3:
+            images_1, images_2, images_3, masks = data[0][0], data[1][0], data[2][0], data[0][1]
             with torch.no_grad():
-                outputs_1, outputs_2, outputs_3 = models[0](images_1.to(device)), models[1](images_2.to(device)), \
-                                                  models[2](
-                                                      images_3.to(device))
+                outputs_1, likelihoodMap_1 = models[0](images_1.to(device))
+                outputs_2, likelihoodMap_2 = models[1](images_2.to(device))
+                outputs_3, likelihoodMap_3 = models[2](images_3.to(device))
                 predict_map = mean_outputs([outputs_1, outputs_2, outputs_3])
-                # predict_map = smooth_gaussian(predict_map)
-                total_val_loss = total_val_loss + loss_fun(predict_map, masks.to(device)).cpu().item()
-                # print('out', predict_map.shape) # (1, 2, 1250, 1250)
-                pred_class = torch.argmax(predict_map, dim=1).float()  # (1, 1250, 1250)
-            if make_prediction:
-                im_name = batch
-                pred_msk = save_prediction_image(pred_class, im_name, epoch, save_folder_name)
-                acc_val = accuracy_check(masks.cpu(), pred_class.cpu())
-                total_val_acc += acc_val
-    elif len(SLICES_COLLECT) == 2:
-        for batch, (data_1, data_2) in enumerate(data_val):
-            images_1, images_2, masks = data_1[0], data_2[0], data_1[1]
+        elif len(SLICES_COLLECT) == 2:
+            images_1, images_2, masks = data[0][0], data[1][0], data[0][1]
             with torch.no_grad():
-                outputs_1, outputs_2 = models[0](images_1.to(device)), models[1](images_2.to(device))
+                outputs_1, likelihoodMap_1 = models[0](images_1.to(device))
+                outputs_2, likelihoodMap_2 = models[1](images_2.to(device))
                 predict_map = mean_outputs([outputs_1, outputs_2])
-                # predict_map = smooth_gaussian(predict_map)
-                total_val_loss = total_val_loss + loss_fun(predict_map, masks.to(device)).cpu().item()
-                # print('out', predict_map.shape) # (1, 2, 1250, 1250)
-                pred_class = torch.argmax(predict_map, dim=1).float()  # (1, 1250, 1250)
-            if make_prediction:
-                im_name = batch
-                pred_msk = save_prediction_image(pred_class, im_name, epoch, save_folder_name)
-                acc_val = accuracy_check(masks.cpu(), pred_class.cpu())
-                total_val_acc += acc_val
-    elif len(SLICES_COLLECT) == 1:
-        for batch, data in enumerate(data_val):
+        elif len(SLICES_COLLECT) == 1:
             images, masks = data[0], data[1]
             with torch.no_grad():
-                predict_map = models[0](images.to(device))
-                # predict_map = smooth_gaussian(predict_map)
-                total_val_loss = total_val_loss + loss_fun(predict_map, masks.to(device)).cpu().item()
-                # print('out', predict_map.shape) # (1, 2, 1250, 1250)
-                pred_class = torch.argmax(predict_map, dim=1).float()  # (1, 1250, 1250)
+                predict_map, likelihoodMap = models[0](images.to(device))
+                save_prediction_likelihood(likelihoodMap, batch, epoch, save_folder_name)
+
+        with torch.no_grad():
+            total_val_loss = total_val_loss + loss_fun(predict_map, masks.to(device)).cpu().item()
+            # print('out', predict_map.shape) # (1, 2, 1250, 1250)
+            pred_class = torch.argmax(predict_map, dim=1).float()  # (1, 1250, 1250)
             if make_prediction:
                 im_name = batch
                 pred_msk = save_prediction_image(pred_class, im_name, epoch, save_folder_name)
@@ -226,6 +201,22 @@ def polarize(img):
     img[img < 0.5] = 0
     return img
 
+
+def save_prediction_likelihood(likelihoodMap, batch, epoch, save_folder_name="result_images"):
+    img_as_np = likelihoodMap.cpu().data.numpy()
+
+    img_as_np = img_as_np * 255
+    img_as_np = img_as_np.astype(np.uint8)
+       # print(img_as_np, img_as_np.shape)
+    img = Image.fromarray(img_as_np.squeeze(0))
+    # organize images in every epoch
+    desired_path = save_folder_name + '/epoch_' + str(epoch) + '/'
+    # Create the path if it does not exist
+    if not os.path.exists(desired_path):
+        os.makedirs(desired_path)
+    # Save Image!
+    export_name = str(batch) + 'lh.png'
+    img.save(desired_path + export_name)
 
 if __name__ == "__main__":
     # A full forward pass
