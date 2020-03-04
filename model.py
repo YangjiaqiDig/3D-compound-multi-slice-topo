@@ -110,7 +110,7 @@ class U_Net(nn.Module):
         # Final output
         x = self.conv_final(x)
         # print('final: ', x.shape)
-        likelihood_map = self.softmax(x)[:,0,:,:]
+        likelihood_map = self.softmax(x)[:,1,:,:]
         # print(likelihood_map.shape)
 
         return x, likelihood_map

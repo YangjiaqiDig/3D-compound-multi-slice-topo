@@ -36,7 +36,9 @@ class CREMIDataTrain(Dataset):
 
         img_as_np, orig_img_as_np = np.stack(img_as_np, axis=0), np.stack(orig_img_as_np, axis=0)
         msk_as_np, orig_msk_as_np = np.stack(msk_as_np, axis=0), np.stack(orig_msk_as_np, axis=0)
-        img1 = Image.fromarray(msk_as_np[101])
+        img1 = Image.fromarray(msk_as_np[105])
+        # img1.save('gt.png')
+
         # img1.show()
 
         train_size = int(img_as_np.shape[0] * TRAIN_VALID_RATIO)
