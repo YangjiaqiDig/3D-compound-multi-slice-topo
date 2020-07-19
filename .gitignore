@@ -62,3 +62,9 @@ train/
 history*/
 train_wrongDt
 dataset_cache_*
+venv/
+train_*/
+TopoLoss/
+*.pyc
+Betti_Compute/
+
